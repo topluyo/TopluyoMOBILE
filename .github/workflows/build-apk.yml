@@ -14,7 +14,7 @@ jobs:
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Java
         uses: actions/setup-java@v4
@@ -33,9 +33,12 @@ jobs:
       - name: Build Release APK
         run: flutter build apk --release
 
-      - name: Upload APK Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: app-release
-          path: build/app/outputs/flutter-apk/app-release.apk
-          retention-days: 7
+      - name: Upload APK to Temporary Server (transfer.sh)
+        run: |
+          # Yüklemeyi yap ve dönen linki değişkene kaydet
+          DOWNLOAD_URL=$(curl -T build/app/outputs/flutter-apk/app-release.apk https://transfer.sh/app-release.apk)
+          
+          # GitHub Actions anasayfasına not olarak yazdır
+          echo "### 🚀 APK Dosyanız Hazır!" >> $GITHUB_STEP_SUMMARY
+          echo "Ziplenmemiş ham APK dosyasını aşağıdaki linkten indirebilirsiniz (14 gün geçerlidir):" >> $GITHUB_STEP_SUMMARY
+          echo "[📥 app-release.apk İndir]($DOWNLOAD_URL)" >> $GITHUB_STEP_SUMMARY
