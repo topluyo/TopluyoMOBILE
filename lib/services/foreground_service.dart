@@ -8,6 +8,7 @@ import 'package:flutter_foreground_task/flutter_foreground_task.dart';
 /// in the background on both Android and iOS.
 class ForegroundServiceManager {
   static bool _isRunning = false;
+  static bool _hasAskedBatteryOptimization = false;
 
   /// Whether the foreground service is currently active.
   static bool get isRunning => _isRunning;
@@ -48,8 +49,11 @@ class ForegroundServiceManager {
     if (_isRunning) return;
 
     try {
-      if (!await FlutterForegroundTask.isIgnoringBatteryOptimizations) {
-        await FlutterForegroundTask.requestIgnoreBatteryOptimization();
+      if (!_hasAskedBatteryOptimization) {
+        _hasAskedBatteryOptimization = true;
+        if (!await FlutterForegroundTask.isIgnoringBatteryOptimizations) {
+          await FlutterForegroundTask.requestIgnoreBatteryOptimization();
+        }
       }
     } catch (_) {}
 
