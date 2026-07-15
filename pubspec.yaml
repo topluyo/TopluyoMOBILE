@@ -15,6 +15,7 @@ dependencies:
   url_launcher: ^6.3.2
   app_links: ^7.2.1
   device_info_plus: ^13.2.0
+  shared_preferences: ^2.5.5
 
 dev_dependencies:
   flutter_test:

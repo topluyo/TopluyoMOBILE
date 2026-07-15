@@ -1,6 +1,8 @@
 
 import 'package:flutter_foreground_task/flutter_foreground_task.dart';
 
+import 'package:shared_preferences/shared_preferences.dart';
+
 /// Manages the foreground service and persistent notification for voice/video calls.
 ///
 /// When the user joins a voice channel, a persistent notification is shown
@@ -8,7 +10,6 @@ import 'package:flutter_foreground_task/flutter_foreground_task.dart';
 /// in the background on both Android and iOS.
 class ForegroundServiceManager {
   static bool _isRunning = false;
-  static bool _hasAskedBatteryOptimization = false;
 
   /// Whether the foreground service is currently active.
   static bool get isRunning => _isRunning;
@@ -49,11 +50,14 @@ class ForegroundServiceManager {
     if (_isRunning) return;
 
     try {
-      if (!_hasAskedBatteryOptimization) {
-        _hasAskedBatteryOptimization = true;
+      final prefs = await SharedPreferences.getInstance();
+      bool hasAsked = prefs.getBool('hasAskedBatteryOptimization') ?? false;
+
+      if (!hasAsked) {
         if (!await FlutterForegroundTask.isIgnoringBatteryOptimizations) {
           await FlutterForegroundTask.requestIgnoreBatteryOptimization();
         }
+        await prefs.setBool('hasAskedBatteryOptimization', true);
       }
     } catch (_) {}
 
