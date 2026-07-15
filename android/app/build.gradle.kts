@@ -5,7 +5,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.topluyo"
+    namespace = "com.topluyo"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -15,7 +15,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.example.topluyo"
+        applicationId = "com.topluyo"
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
