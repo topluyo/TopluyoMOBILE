@@ -5,6 +5,9 @@ on:
     tags:
       - 'v*' # Bu workflow sadece v1.0.0, v1.0.1 gibi 'v' ile başlayan bir tag atıldığında çalışır
 
+permissions:
+  contents: write
+
 jobs:
   build-android:
     name: Build Android
@@ -88,11 +91,9 @@ jobs:
         with:
           path: artifacts
 
-      - name: Create Release
+      - name: Upload Assets to Release
         uses: softprops/action-gh-release@v2
         with:
-          name: Release ${{ github.ref_name }}
-          generate_release_notes: true
           files: |
             artifacts/android-apk/app-release.apk
             artifacts/android-aab/app-release.aab
