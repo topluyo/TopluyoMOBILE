@@ -265,13 +265,15 @@ class _WebViewScreenState extends State<WebViewScreen> {
               // iOS-specific WebView settings
               allowsInlineMediaPlayback: true,
               allowsAirPlayForMediaPlayback: true,
+              sharedCookiesEnabled: true, // Fix iOS session drops
 
               // Performance & compatibility
               hardwareAcceleration: true,
-              useHybridComposition: true,
+              useHybridComposition: false,
               domStorageEnabled: true,
               databaseEnabled: true,
               cacheEnabled: true,
+              thirdPartyCookiesEnabled: true, // Fix Android session drops
               supportZoom: false,
               verticalScrollBarEnabled: false,
               horizontalScrollBarEnabled: false,
@@ -280,6 +282,8 @@ class _WebViewScreenState extends State<WebViewScreen> {
               // Mixed content (for WebSocket connections)
               mixedContentMode: MixedContentMode.MIXED_CONTENT_ALWAYS_ALLOW,
 
+              // Custom User Agent to bypass Google's "disallowed_useragent" error
+              userAgent: 'Mozilla/5.0 (Linux; Android 13; SM-G998B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Mobile Safari/537.36',
               // User agent suffix to identify mobile app
               applicationNameForUserAgent: 'Topluyo-Mobile/1.0',
             ),
@@ -324,7 +328,17 @@ class _WebViewScreenState extends State<WebViewScreen> {
               final uri = navigationAction.request.url;
               if (uri != null) {
                 final host = uri.host;
-                if (!host.contains('topluyo.com') && host.isNotEmpty) {
+                
+                // Allow OAuth and login domains to load inside the WebView
+                final isOAuthDomain = host.contains('google.com') || 
+                                      host.contains('google.co') || // e.g. google.com.tr
+                                      host.contains('youtube.com') || // Google auth redirects to accounts.youtube.com
+                                      host.contains('kick.com') ||
+                                      host.contains('discord.com') ||
+                                      host.contains('twitter.com') ||
+                                      host.contains('apple.com');
+
+                if (!host.contains('topluyo.com') && host.isNotEmpty && !isOAuthDomain) {
                   if (await canLaunchUrl(uri)) {
                     await launchUrl(uri, mode: LaunchMode.externalApplication);
                     return NavigationActionPolicy.CANCEL;
