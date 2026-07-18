@@ -30,7 +30,7 @@ class WebViewScreen extends StatefulWidget {
   State<WebViewScreen> createState() => _WebViewScreenState();
 }
 
-class _WebViewScreenState extends State<WebViewScreen> {
+class _WebViewScreenState extends State<WebViewScreen> with WidgetsBindingObserver {
   InAppWebViewController? _webViewController;
   bool _micEnabled = true;
   bool _isInCall = false;
@@ -43,6 +43,7 @@ class _WebViewScreenState extends State<WebViewScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     // Required in v8 to receive data from the foreground task isolate
     FlutterForegroundTask.initCommunicationPort();
     FlutterForegroundTask.addTaskDataCallback(_onReceiveTaskData);
@@ -298,11 +299,21 @@ class _WebViewScreenState extends State<WebViewScreen> {
               }
             },
             onLoadStop: (controller, url) async {
+              // Force cookie flush on page load
+              try {
+                await CookieManager.instance().flush();
+              } catch (_) {}
               // Inject all JS blocks after page load
               await JsBridge.injectAll(controller);
               debugPrint('[Topluyo] JS injected on: $url');
               // Report any errors that happened before load
               await _flushPendingErrors();
+            },
+            onUpdateVisitedHistory: (controller, url, isReload) async {
+              // Force cookie flush when client-side router changes URL
+              try {
+                await CookieManager.instance().flush();
+              } catch (_) {}
             },
             onPermissionRequest: (controller, request) async {
               // Request native permissions when the site requests them (e.g., when iframe connects to WebRTC)
@@ -353,7 +364,23 @@ class _WebViewScreenState extends State<WebViewScreen> {
   }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused || 
+        state == AppLifecycleState.inactive || 
+        state == AppLifecycleState.hidden || 
+        state == AppLifecycleState.detached) {
+      // Force write cookies to disk when app goes to background
+      try {
+        CookieManager.instance().flush();
+      } catch (e) {
+        debugPrint('[Topluyo] Error flushing cookies: $e');
+      }
+    }
+  }
+
+  @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _linkSubscription?.cancel();
     FlutterForegroundTask.removeTaskDataCallback(_onReceiveTaskData);
     // Ensure foreground service is stopped when the screen is disposed
