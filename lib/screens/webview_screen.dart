@@ -255,7 +255,9 @@ class _WebViewScreenState extends State<WebViewScreen> with WidgetsBindingObserv
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.black, // Prevents white flash/lines
       body: SafeArea(
+        bottom: false, // Fixes the white line at the bottom on some Android devices
         child: InAppWebView(
             initialUrlRequest: URLRequest(
               url: WebUri(_initialUrl),
