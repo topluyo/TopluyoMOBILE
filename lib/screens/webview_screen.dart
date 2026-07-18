@@ -3,6 +3,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_foreground_task/flutter_foreground_task.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:app_links/app_links.dart';
@@ -39,6 +40,8 @@ class _WebViewScreenState extends State<WebViewScreen> with WidgetsBindingObserv
 
   late AppLinks _appLinks;
   StreamSubscription<Uri>? _linkSubscription;
+
+  static const platform = MethodChannel('com.topluyo/cookie_manager');
 
   @override
   void initState() {
@@ -299,9 +302,9 @@ class _WebViewScreenState extends State<WebViewScreen> with WidgetsBindingObserv
               }
             },
             onLoadStop: (controller, url) async {
-              // Force cookie flush on page load
+              // Force cookie flush natively on both platforms
               try {
-                await CookieManager.instance().flush();
+                await platform.invokeMethod('flushCookies');
               } catch (_) {}
               // Inject all JS blocks after page load
               await JsBridge.injectAll(controller);
@@ -312,7 +315,7 @@ class _WebViewScreenState extends State<WebViewScreen> with WidgetsBindingObserv
             onUpdateVisitedHistory: (controller, url, isReload) async {
               // Force cookie flush when client-side router changes URL
               try {
-                await CookieManager.instance().flush();
+                await platform.invokeMethod('flushCookies');
               } catch (_) {}
             },
             onPermissionRequest: (controller, request) async {
@@ -369,9 +372,8 @@ class _WebViewScreenState extends State<WebViewScreen> with WidgetsBindingObserv
         state == AppLifecycleState.inactive || 
         state == AppLifecycleState.hidden || 
         state == AppLifecycleState.detached) {
-      // Force write cookies to disk when app goes to background
       try {
-        CookieManager.instance().flush();
+        platform.invokeMethod('flushCookies');
       } catch (e) {
         debugPrint('[Topluyo] Error flushing cookies: $e');
       }
